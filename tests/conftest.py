@@ -8,6 +8,10 @@ import pytest
 from dotenv import load_dotenv
 
 
+def _running_in_container() -> bool:
+    return os.path.exists("/.dockerenv") or os.environ.get("PYTHONPATH") == "/app" or os.environ.get("RUNNING_IN_DOCKER") == "1"
+
+
 @pytest.fixture(scope="session", autouse=True)
 def env() -> None:
     # Load .env if present; otherwise set sane defaults for tests
@@ -24,9 +28,14 @@ def env() -> None:
     except Exception:
         pass
     os.environ.setdefault("APP_ENV", "dev")
-    # Force localhost services for tests, regardless of .env compose values
-    os.environ["POSTGRES_DSN"] = "postgresql+psycopg://deid:deidpass@localhost:5432/deid"
-    os.environ["REDIS_URL"] = "redis://localhost:6379/0"
+    # Configure DSNs depending on environment (container vs local)
+    if _running_in_container():
+        os.environ.setdefault("POSTGRES_DSN", "postgresql+psycopg://deid:deidpass@postgres:5432/deid")
+        os.environ.setdefault("REDIS_URL", "redis://redis:6379/0")
+        os.environ["RUNNING_IN_DOCKER"] = "1"
+    else:
+        os.environ.setdefault("POSTGRES_DSN", "postgresql+psycopg://deid:deidpass@localhost:5432/deid")
+        os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
     # Celery eager mode for unit tests
     os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "1")
     os.environ.setdefault("CELERY_TASK_EAGER_PROPAGATES", "1")
@@ -50,7 +59,11 @@ def db_setup() -> None:
     if not _db_available():
         pytest.skip("Database not available; skipping DB migrations")
     # Run alembic upgrade head once per session
-    subprocess.run(["alembic", "upgrade", "head"], check=True)
+    env = os.environ.copy()
+    # Ensure app package is importable inside container alembic subprocess
+    if _running_in_container():
+        env.setdefault("PYTHONPATH", "/app")
+    subprocess.run(["alembic", "upgrade", "head"], check=True, env=env)
 
 
 @pytest.fixture()

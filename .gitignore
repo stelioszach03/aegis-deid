@@ -2,11 +2,38 @@
 __pycache__/
 .DS_Store
 .env
+/.env.*
+!.env.example
 dist/
 build/
 *.pyc
 .pytest_cache/
 .mypy_cache/
 .vscode/
+/.idea/
 *.egg-info/
 
+# Coverage artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Ruff / linters
+.ruff_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Generated datasets/reports
+scripts/dataset*.jsonl
+scripts/summary*.json
+
+# Local scratch files
+note_big_*.txt
+
+# pyenv
+.python-version

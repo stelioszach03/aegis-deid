@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# System deps (libpq for psycopg, build tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libpq-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+COPY app/ /app/app/
+COPY scripts/ /app/scripts/
+COPY alembic.ini /app/alembic.ini
+COPY alembic/ /app/alembic/
+
+ENV APP_ENV=prod
+
+CMD ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "--loglevel=INFO"]

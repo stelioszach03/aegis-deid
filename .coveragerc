@@ -1,0 +1,10 @@
+[run]
+branch = True
+source = app,scripts
+omit =
+    app/ui/*
+    app/**/*.pyc
+
+[report]
+show_missing = True
+

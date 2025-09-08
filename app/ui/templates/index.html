@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/style.css?v={{ version }}" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="inner">
+        <div class="brand">Aegis De‑ID</div>
+        <div class="actions" role="toolbar" aria-label="Actions">
+          <label class="sr-only" for="lang">Language</label>
+          <select id="lang" class="select">
+            <option value="">Auto</option>
+            <option value="en">English</option>
+            <option value="el">Greek</option>
+          </select>
+
+          <label class="sr-only" for="policy">Default Policy</label>
+          <select id="policy" class="select">
+            <option value="mask">mask</option>
+            <option value="hash">hash</option>
+            <option value="redact">redact</option>
+          </select>
+
+
+        <button id="run-btn" class="btn primary" title="De-Identify (Ctrl/Cmd+Enter)">
+          <svg class="icon"><use href="/static/icons.svg#play"/></svg>
+          <span>De‑Identify</span>
+        </button>
+        <button id="clear-btn" class="btn" title="Clear">
+          <svg class="icon"><use href="/static/icons.svg#trash"/></svg>
+          <span>Clear</span>
+        </button>
+        <button id="upload-btn" class="btn" title="Upload Files (.txt)">
+          <svg class="icon"><use href="/static/icons.svg#upload"/></svg>
+          <span>Upload</span>
+        </button>
+        <input id="file-input" type="file" accept=".txt" multiple hidden />
+        <button id="download-btn" class="btn" title="Download Result">
+          <svg class="icon"><use href="/static/icons.svg#download"/></svg>
+          <span>Download</span>
+        </button>
+        <button id="theme-btn" class="btn ghost" title="Toggle Theme">
+          <svg class="icon" id="theme-icon"><use href="/static/icons.svg#moon"/></svg>
+        </button>
+          <div id="metrics-chip" class="chip" aria-live="polite" title="Last run metrics">
+            <svg class="icon xs"><use href="/static/icons.svg#clock"/></svg>
+            <span id="metrics-text">—</span>
+            <a id="last-eval-link" href="#" class="link hidden">Last eval</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="dropzone" class="dropzone" aria-label="Upload zone" tabindex="0">
+        <svg class="icon"><use href="/static/icons.svg#upload"/></svg>
+        <span>Drag & drop .txt files here or click Upload</span>
+      </section>
+
+      <div class="split responsive" id="editor">
+        <section class="card left" aria-label="Original">
+          <div class="card-header">
+            <h2>Original</h2>
+            <div class="tools">
+              <div class="samples">
+                <button class="btn sm" id="sample-en">Insert Sample (EN)</button>
+                <button class="btn sm" id="sample-el">Insert Sample (EL)</button>
+              </div>
+              <span id="char-counter" class="badge" title="Character count">0</span>
+            </div>
+          </div>
+          <textarea id="original" rows="14" placeholder="Paste text with PII…" aria-label="Original text"></textarea>
+          <div class="assist">
+            <button class="btn sm" id="paste-btn">Paste</button>
+          </div>
+        </section>
+
+        <section class="card right" aria-label="De‑Identified">
+          <div class="card-header">
+            <h2>De‑Identified</h2>
+            <div class="tools">
+              <button class="btn sm" id="copy-btn">
+                <svg class="icon xs"><use href="/static/icons.svg#copy"/></svg>
+                Copy Output
+              </button>
+            </div>
+          </div>
+          <textarea id="deid" rows="14" readonly aria-label="De‑Identified output"></textarea>
+        </section>
+      </div>
+
+      <section id="files-tabs" class="tabs hidden" aria-label="File results">
+        <div class="tablist" role="tablist" id="file-tablist"></div>
+        <div id="file-panels"></div>
+      </section>
+
+      <section class="entities card" aria-label="Entities">
+        <div class="entities-toolbar">
+          <div class="search">
+            <svg class="icon xs"><use href="/static/icons.svg#search"/></svg>
+            <input id="search-input" class="input" type="search" placeholder="Search entities (Ctrl/Cmd+K)" aria-label="Search entities" />
+          </div>
+          <select id="label-filter" class="select" multiple size="6" aria-label="Label filter (multi)">
+            <option value="">Labels: All</option>
+            <option value="PERSON">PERSON</option>
+            <option value="EMAIL">EMAIL</option>
+            <option value="PHONE_GR">PHONE_GR</option>
+            <option value="AMKA">AMKA</option>
+            <option value="MRN">MRN</option>
+            <option value="GPE">GPE</option>
+            <option value="URL">URL</option>
+            <option value="IP">IP</option>
+            <option value="ADDRESS">ADDRESS</option>
+            <option value="ADDRESS_GR">ADDRESS_GR</option>
+          </select>
+          <select id="action-filter" class="select" aria-label="Action filter">
+            <option value="">Action: All</option>
+            <option value="mask">mask</option>
+            <option value="hash">hash</option>
+            <option value="redact">redact</option>
+          </select>
+          <div class="range-wrap" title="Min text length">
+            <label for="minlen-range" class="sr-only">Min length</label>
+            <input id="minlen-range" class="range" type="range" min="0" max="20" step="1" value="0" aria-label="Min length" />
+            <span id="minlen-value" class="badge">0</span>
+          </div>
+          <select id="sort-by" class="select" aria-label="Sort by">
+            <option value="start">Sort: Start</option>
+            <option value="label">Sort: Label</option>
+            <option value="length">Sort: Length</option>
+          </select>
+          <button id="clear-filters" class="btn sm" title="Clear filters">Clear filters</button>
+        </div>
+        <div class="table-wrap">
+          <table class="entities-table">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Sample</th>
+                <th>Action</th>
+                <th>Start</th>
+                <th>End</th>
+              </tr>
+            </thead>
+            <tbody id="entities-body">
+              <tr class="empty"><td colspan="5">No entities yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination">
+          <button class="btn sm" id="prev-page">Prev</button>
+          <span id="page-info" class="muted">Page 1</span>
+          <button class="btn sm" id="next-page">Next</button>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="eval-modal" class="modal">
+      <div class="modal-content">
+        <h3>Last Evaluation</h3>
+        <div id="eval-content" class="mono small">Loading…</div>
+        <div class="modal-actions">
+          <button class="btn" id="close-eval">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="toaster" class="toaster" role="status" aria-live="polite"></div>
+
+    <script src="/static/toaster.js?v={{ version }}" defer></script>
+    <script src="/static/app.js?v={{ version }}" defer></script>
+  </body>
+  </html>

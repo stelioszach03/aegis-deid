@@ -1,0 +1,6 @@
+Patient John Papadopoulos was admitted on 2024-03-12 in Athens.
+Contact: +30 694 123 4567, john_doe+test@example.co.uk
+Record: MRN=ABCD_778899
+Refer to: https://hospital.example.org/cases/7788
+Client IP noted: 192.168.10.25
+
